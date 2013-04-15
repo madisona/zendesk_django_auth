@@ -5,3 +5,8 @@
 .idea/*
 
 local.db
+
+# for buiding/installing package
+build/*
+dist/*
+*.egg-info
