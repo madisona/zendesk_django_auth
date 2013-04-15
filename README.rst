@@ -1,26 +1,27 @@
 Zendesk Django Auth
 ===================
-Allows your Django App to be used as an authentication platform for your Zen Desk Account
+Allows your Django App to be used as an authentication platform for your Zendesk Account
 
 Zendesk API Documentation
 -------------------------
-see `http://www.zendesk.com/support/api/remote-authentication` for ZenDesk Documentation
+see `http://www.zendesk.com/support/api/remote-authentication` for ZenDesk Documentation.
+
 This module is specifically for Zendesk API v1
 
 Installation
 ------------
-pip install zendesk_django_auth
+    `pip install zendesk_django_auth`
 
 
 Usage
 -----
-Using Zendesk SSO in your app is scary simple...
+Using Zendesk SSO in your app is extremely simple...
 
-in your settings.py, add 'zendesk_auth' to your INSTALLED_APPS
+in your settings.py, add 'zendesk_auth' to your `INSTALLED_APPS`
 
 Then add the following two settings
-`ZENDESK_URL=https://your_domain.zendesk.com`
-`ZENDESK_TOKEN=you_zendesk_token`
+    `ZENDESK_URL=https://your_domain.zendesk.com`
+    `ZENDESK_TOKEN=you_zendesk_token`
 
 Next, add this (or equivalent) to your urls.py:
 
