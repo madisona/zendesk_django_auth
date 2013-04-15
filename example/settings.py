@@ -73,8 +73,7 @@ INSTALLED_APPS = (
     'zendesk_auth',
 )
 
-#ZENDESK_URL = "https://domain.zendesk.com"
-#ZENDESK_TOKEN = "my-random-token-provided-by-zendesk"
-ZENDESK_URL = "https://imtapps.zendesk.com"
-ZENDESK_TOKEN = "iKMa4PdCUfxDDoqHxKFlhoG88DGEXshGMDXnS4FrcKW5zY6u"
+ZENDESK_URL = "https://domain.zendesk.com"
+ZENDESK_TOKEN = "my-random-token-provided-by-zendesk"
+
 LOGIN_URL = "/admin"
