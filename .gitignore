@@ -1,0 +1,7 @@
+
+*.py[co]
+
+.DS_Store
+.idea/*
+
+local.db
