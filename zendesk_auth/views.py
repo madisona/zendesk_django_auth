@@ -1,14 +1,16 @@
 
 from hashlib import md5
+import time
 from urllib import urlencode
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.utils.http import urlquote
 from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
 
+import jwt
 
 class ZendeskAuthorize(RedirectView):
     """
@@ -117,3 +119,40 @@ class ZendeskAuthorize(RedirectView):
 
     def get_timestamp(self):
         return self.request.GET.get('timestamp', '')
+
+
+class ZendeskJWTAuthorize(ZendeskAuthorize):
+    """
+    A view for working with the new mandatory JWT style of authentication.
+
+    Zendesk is moving everyone to JWT Authentication:
+    https://support.zendesk.com/entries/23675367-Setting-up-single-sign-on-with-JWT-JSON-Web-Token-
+
+    """
+    def get_redirect_url(self, **kwargs):
+        """
+        Returns the url back to Zendesk after successful authentication.
+
+        To see all the available parameters you can pass back to zendesk, read:
+            http://www.zendesk.com/support/api/remote-authentication
+            name, email, timestamp, and hash are required.
+        """
+        return r"{zendesk_url}/access/jwt/?jwt={jwt_string}".format(
+            zendesk_url=settings.ZENDESK_URL,
+            jwt_string=self.get_jwt_string(),
+        )
+
+    def get_jwt_string(self):
+        payload = {
+            "iat": int(time.time()),  # issued at time
+            "jti": str(uuid.uuid1()), # web token id
+            "email": self.get_email(),
+            "name": self.get_user_name(),
+            "external_id": self.get_external_id(),
+            "organization": self.get_organization(),
+            "tags": self.get_tags(),
+            "remote_photo_url": self.get_remote_photo_url(),
+        }
+        clean_payload = {k: v for k, v in payload.items() if v}
+
+        return jwt.encode(clean_payload, settings.ZENDESK_TOKEN)

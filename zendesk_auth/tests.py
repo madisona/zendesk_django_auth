@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django import test
 from django.conf import settings
+import jwt
 
 from zendesk_auth import views
 
@@ -208,3 +209,108 @@ class AuthorizeTests(test.TestCase):
 
         timestamp = view.get_timestamp()
         self.assertEqual(u'', timestamp)
+
+
+@test.utils.override_settings(ZENDESK_URL=TEST_ZENDESK_URL, ZENDESK_TOKEN=TEST_ZENDESK_TOKEN)
+class ZendeskJWTAuthorizeTests(test.TestCase):
+    urls = 'zendesk_auth.urls'
+
+    def setUp(self):
+        self.sut = views.ZendeskJWTAuthorize
+
+    def test_subclasses_zendesk_authorize_view(self):
+        self.assertTrue(issubclass(self.sut, views.ZendeskAuthorize))
+
+    @mock.patch('zendesk_auth.views.ZendeskJWTAuthorize.get_jwt_string')
+    def test_get_redirect_view_builds_with_jwt_string(self, get_jwt_string):
+        get_jwt_string.return_value="abcd"
+        view = self.sut()
+        expected_url = "{}/access/jwt/?jwt=abcd".format(settings.ZENDESK_URL)
+        redirect_url = view.get_redirect_url()
+        self.assertEqual(expected_url, redirect_url)
+
+    @mock.patch('zendesk_auth.views.time')
+    @mock.patch('zendesk_auth.views.uuid')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_email')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_user_name')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_external_id')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_organization')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_tags')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_remote_photo_url')
+    def test_get_jwt_string_returns_encoded_string(self, get_photo, get_tags, get_organization, get_id, get_name, get_email, uuid, time):
+        time.time.return_value = 123456
+        uuid.uuid1.return_value = "abcd1234"
+        get_email.return_value = "test@example.com"
+        get_name.return_value = "Tester McGee"
+        get_id.return_value = "TST1234"
+        get_organization.return_value = "Acme, Inc."
+        get_tags.return_value = ["foo", "bar"]
+        get_photo.return_value = "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg"
+
+
+        view = self.sut()
+        with mock.patch.object(jwt, "encode") as encode:
+            jwt_string = view.get_jwt_string()
+
+        payload = {
+            "iat": time.time.return_value,
+            "jti": uuid.uuid1.return_value,
+            "email": get_email.return_value,
+            "name": get_name.return_value,
+            "external_id": get_id.return_value,
+            "organization": get_organization.return_value,
+            "tags": get_tags.return_value,
+            "remote_photo_url": get_photo.return_value,
+        }
+        encode.assert_called_once_with(payload, settings.ZENDESK_TOKEN)
+        self.assertEqual(encode.return_value, jwt_string)
+        get_email.assert_called_once_with()
+        get_name.assert_called_once_with()
+        get_id.assert_called_once_with()
+        get_organization.assert_called_once_with()
+        get_tags.assert_called_once_with()
+        get_photo.assert_called_once_with()
+        time.time.assert_called_once_with()
+        uuid.uuid1.assert_called_once_with()
+
+
+    @mock.patch('zendesk_auth.views.time')
+    @mock.patch('zendesk_auth.views.uuid')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_email')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_user_name')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_external_id')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_organization')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_tags')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_remote_photo_url')
+    def test_only_encodes_parameters_that_have_a_value(self, get_photo, get_tags, get_organization, get_id, get_name, get_email, uuid, time):
+        time.time.return_value = 123456
+        uuid.uuid1.return_value = "abcd1234"
+        get_email.return_value = "test@example.com"
+        get_name.return_value = "Tester McGee"
+        get_id.return_value = ""
+        get_organization.return_value = ""
+        get_tags.return_value = ["foo", "bar"]
+        get_photo.return_value = ""
+
+
+        view = self.sut()
+        with mock.patch.object(jwt, "encode") as encode:
+            jwt_string = view.get_jwt_string()
+
+        expected_payload = {
+            "iat": time.time.return_value,
+            "jti": uuid.uuid1.return_value,
+            "email": get_email.return_value,
+            "name": get_name.return_value,
+            "tags": get_tags.return_value,
+        }
+        encode.assert_called_once_with(expected_payload, settings.ZENDESK_TOKEN)
+        self.assertEqual(encode.return_value, jwt_string)
+        get_email.assert_called_once_with()
+        get_name.assert_called_once_with()
+        get_id.assert_called_once_with()
+        get_organization.assert_called_once_with()
+        get_tags.assert_called_once_with()
+        get_photo.assert_called_once_with()
+        time.time.assert_called_once_with()
+        uuid.uuid1.assert_called_once_with()
