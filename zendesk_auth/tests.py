@@ -48,7 +48,7 @@ class AuthorizeTests(test.TestCase):
             zendesk_url=TEST_ZENDESK_URL,
             name=quote_plus(user.get_full_name()),
             email=quote_plus(user.email),
-            external_id=user.username,
+            external_id=user.get_username(),
             timestamp=u'100',
             hash='27d0037d68b7d8bd7acf01df7e8f96ab',
         )
@@ -82,7 +82,7 @@ class AuthorizeTests(test.TestCase):
         request.user = u
 
         hash_string = "{user_name}|{email}|{external_id}||||{token}|{timestamp}".format(
-            user_name="Joe Tester", email=u.email, external_id=u.username, token=settings.ZENDESK_TOKEN, timestamp=u'500')
+            user_name="Joe Tester", email=u.email, external_id=u.get_username(), token=settings.ZENDESK_TOKEN, timestamp=u'500')
         expected_hash = md5(hash_string).hexdigest()
 
         view = views.ZendeskAuthorize(request=request)
@@ -95,11 +95,11 @@ class AuthorizeTests(test.TestCase):
         get_params.return_value = [
             ('name', '{} {}'.format(u.first_name, u.last_name)),
             ('email', u.email),
-            ('external_id', u.username),
+            ('external_id', u.get_username()),
         ]
 
         hash_string = "{user_name}|{email}|{external_id}".format(
-            user_name="Joe Tester", email=u.email, external_id=u.username)
+            user_name="Joe Tester", email=u.email, external_id=u.get_username())
         expected_hash = md5(hash_string).hexdigest()
 
         view = views.ZendeskAuthorize()
@@ -159,7 +159,7 @@ class AuthorizeTests(test.TestCase):
         request.user = u
 
         view = views.ZendeskAuthorize(request=request)
-        self.assertEqual(u.username, view.get_user_name())
+        self.assertEqual(u.get_username(), view.get_user_name())
 
     def test_get_email_returns_user_email(self):
         u = create_user(username="joe", email="joe@example.com")
@@ -175,7 +175,7 @@ class AuthorizeTests(test.TestCase):
         request.user = u
 
         view = views.ZendeskAuthorize(request=request)
-        self.assertEqual(u.username, view.get_external_id())
+        self.assertEqual(u.get_username(), view.get_external_id())
 
     def test_get_organization_returns_empty_string_by_default(self):
         view = views.ZendeskAuthorize()

@@ -93,7 +93,7 @@ class ZendeskAuthorize(RedirectView):
         For standard Django Apps you probably want this to return the username because
         there's not a unique constraint on email by default.
         """
-        return self.request.user.username
+        return self.request.user.get_username()
 
     def get_organization(self):
         """
