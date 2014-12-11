@@ -10,6 +10,8 @@ This module is specifically for Zendesk API v1
 
 Installation
 ------------
+zendesk_auth version 0.0.3+ works with django 1.5 and above
+
     `pip install zendesk_django_auth`
 
 
