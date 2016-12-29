@@ -2,9 +2,9 @@
 # -*- coding: utf8 -*-
 
 from hashlib import md5
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
-import mock
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -83,7 +83,7 @@ class AuthorizeTests(test.TestCase):
 
         hash_string = "{user_name}|{email}|{external_id}||||{token}|{timestamp}".format(
             user_name="Joe Tester", email=u.email, external_id=u.get_username(), token=settings.ZENDESK_TOKEN, timestamp=u'500')
-        expected_hash = md5(hash_string).hexdigest()
+        expected_hash = md5(hash_string.encode('utf-8')).hexdigest()
 
         view = views.ZendeskAuthorize(request=request)
         self.assertEqual(expected_hash, view.generate_hash())
@@ -100,7 +100,7 @@ class AuthorizeTests(test.TestCase):
 
         hash_string = "{user_name}|{email}|{external_id}".format(
             user_name="Joe Tester", email=u.email, external_id=u.get_username())
-        expected_hash = md5(hash_string).hexdigest()
+        expected_hash = md5(hash_string.encode('utf-8')).hexdigest()
 
         view = views.ZendeskAuthorize()
         self.assertEqual(expected_hash, view.generate_hash())
