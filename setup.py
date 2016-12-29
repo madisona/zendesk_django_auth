@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 from zendesk_auth import VERSION
 
 setup(
-    name="zendesk_django_auth",
+    name="zendesk-django-auth",
     version=VERSION,
     author="Aaron Madison",
     description="Use your django app as an auth platform for Zendesk.",
