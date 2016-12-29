@@ -1,7 +1,6 @@
-
 from hashlib import md5
 import time
-from urllib import urlencode
+from urllib.parse import urlencode
 import uuid
 
 from django.conf import settings
@@ -11,6 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
 
 import jwt
+
 
 class ZendeskAuthorize(RedirectView):
     """
@@ -33,9 +33,7 @@ class ZendeskAuthorize(RedirectView):
             name, email, timestamp, and hash are required.
         """
         return r"{zendesk_url}/access/remoteauth/?{query_string}&hash={hashed_val}".format(
-            zendesk_url=settings.ZENDESK_URL,
-            query_string=self.create_query_string(),
-            hashed_val=self.generate_hash()
+            zendesk_url=settings.ZENDESK_URL, query_string=self.create_query_string(), hashed_val=self.generate_hash()
         )
 
     def get_zendesk_parameters(self):
@@ -129,6 +127,7 @@ class ZendeskJWTAuthorize(ZendeskAuthorize):
     https://support.zendesk.com/entries/23675367-Setting-up-single-sign-on-with-JWT-JSON-Web-Token-
 
     """
+
     def get_redirect_url(self, **kwargs):
         """
         Returns the url back to Zendesk after successful authentication.
@@ -145,7 +144,7 @@ class ZendeskJWTAuthorize(ZendeskAuthorize):
     def get_jwt_string(self):
         payload = {
             "iat": int(time.time()),  # issued at time
-            "jti": str(uuid.uuid1()), # web token id
+            "jti": str(uuid.uuid1()),  # web token id
             "email": self.get_email(),
             "name": self.get_user_name(),
             "external_id": self.get_external_id(),
