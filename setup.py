@@ -1,4 +1,3 @@
-
 from setuptools import setup, find_packages
 
 from zendesk_auth import VERSION
@@ -12,10 +11,10 @@ setup(
     url="https://github.com/madisona/zendesk_django_auth",
     packages=find_packages(exclude=["example*"]),
     include_package_data=True,
-    install_requires=['django>=1.5', 'PyJWT==0.1.5'], # so we can use generic views
+    install_requires=['django>=1.5', 'PyJWT==0.1.5'],  # so we can use generic views
     tests_require=["mock"],
     zip_safe=False,
-    classifiers = [
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "Framework :: Django",
