@@ -1,7 +1,11 @@
-
 from hashlib import md5
 import time
-from urllib import urlencode
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode  # python 27
+
 import uuid
 
 from django.conf import settings
@@ -11,6 +15,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
 
 import jwt
+
 
 class ZendeskAuthorize(RedirectView):
     """
@@ -32,17 +37,16 @@ class ZendeskAuthorize(RedirectView):
             http://www.zendesk.com/support/api/remote-authentication
             name, email, timestamp, and hash are required.
         """
-        return r"{zendesk_url}/access/remoteauth/?{query_string}&hash={hashed_val}".format(
+        return r"{zendesk_url}/access/remoteauth/?{query_string}&hash={hashed_val}".format(  # noqa: E501
             zendesk_url=settings.ZENDESK_URL,
             query_string=self.create_query_string(),
-            hashed_val=self.generate_hash()
-        )
+            hashed_val=self.generate_hash())
 
     def get_zendesk_parameters(self):
         """
-        returns a list of two element tuples for each variable zendesk accepts.
-        The order of these are critically important as it will affect the hashed
-        value being sent to Zendesk.
+        returns a list of two element tuples for each variable zendesk
+        accepts. The order of these are critically important as it will
+        affect the hashed value being sent to Zendesk.
         """
         return [
             ("name", self.get_user_name()),
@@ -65,8 +69,9 @@ class ZendeskAuthorize(RedirectView):
 
     def generate_hash(self):
         """
-        hash should be pipe delimited values for all items possible to send to zendesk.
-        If any items are missing, that's ok, just leave them as empty string.
+        hash should be pipe delimited values for all items possible to send to
+        zendesk. If any items are missing, that's ok, just leave them as
+        empty string.
         """
         params = self.get_zendesk_parameters()
         input_string = "|".join([p[1] for p in params])
@@ -74,7 +79,8 @@ class ZendeskAuthorize(RedirectView):
 
     def get_user_name(self):
         """
-        Required by Zendesk remote auth API. Uses username if real name is not defined.
+        Required by Zendesk remote auth API.
+        Uses username if real name is not defined.
         """
         u = self.request.user
 
@@ -89,9 +95,9 @@ class ZendeskAuthorize(RedirectView):
 
     def get_external_id(self):
         """
-        Use when username is not the unique identifier for your users and might change.
-        For standard Django Apps you probably want this to return the username because
-        there's not a unique constraint on email by default.
+        Use when username is not the unique identifier for your users and
+        might change. For standard Django Apps you'll want this to return the
+        username because there's not a unique constraint on email by default.
         """
         return self.request.user.get_username()
 
@@ -110,7 +116,8 @@ class ZendeskAuthorize(RedirectView):
 
     def get_remote_photo_url(self):
         """
-        If you use this, the url must be publicly available and not behind any authentication.
+        If you use this, the url must be publicly available and not behind
+        any authentication.
         """
         return ''
 
@@ -129,6 +136,7 @@ class ZendeskJWTAuthorize(ZendeskAuthorize):
     https://support.zendesk.com/entries/23675367-Setting-up-single-sign-on-with-JWT-JSON-Web-Token-
 
     """
+
     def get_redirect_url(self, **kwargs):
         """
         Returns the url back to Zendesk after successful authentication.
@@ -139,13 +147,12 @@ class ZendeskJWTAuthorize(ZendeskAuthorize):
         """
         return r"{zendesk_url}/access/jwt/?jwt={jwt_string}".format(
             zendesk_url=settings.ZENDESK_URL,
-            jwt_string=self.get_jwt_string(),
-        )
+            jwt_string=self.get_jwt_string(), )
 
     def get_jwt_string(self):
         payload = {
             "iat": int(time.time()),  # issued at time
-            "jti": str(uuid.uuid1()), # web token id
+            "jti": str(uuid.uuid1()),  # web token id
             "email": self.get_email(),
             "name": self.get_user_name(),
             "external_id": self.get_external_id(),
