@@ -25,14 +25,18 @@ TEST_ZENDESK_URL = "http://mycompany.zendesk.com"
 TEST_ZENDESK_TOKEN = "my-zendesk-token-for-tests"
 
 
-def create_user(username="test", email="test@example.com", password='pswd', **kwargs):
+def create_user(username="test",
+                email="test@example.com",
+                password='pswd',
+                **kwargs):
     u = User(username=username, email=email, **kwargs)
     u.set_password(password)
     u.save()
     return u
 
 
-@test.utils.override_settings(ZENDESK_URL=TEST_ZENDESK_URL, ZENDESK_TOKEN=TEST_ZENDESK_TOKEN)
+@test.utils.override_settings(
+    ZENDESK_URL=TEST_ZENDESK_URL, ZENDESK_TOKEN=TEST_ZENDESK_TOKEN)
 class AuthorizeTests(test.TestCase):
     urls = 'zendesk_auth.urls'
 
@@ -42,35 +46,40 @@ class AuthorizeTests(test.TestCase):
     def test_redirects_to_login_when_not_logged_in(self):
         response = self.client.get(self.authorize_url)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(r'{}?next={}'.format(settings.LOGIN_URL, self.authorize_url), response['Location'])
+        self.assertEqual(r'{}?next={}'.format(
+            settings.LOGIN_URL, self.authorize_url), response['Location'])
 
     def test_redirects_to_zendesk_url(self):
         # functional... testing end to end process
-        user = create_user("test", first_name="joe", last_name="tester", password="pswd")
+        user = create_user(
+            "test", first_name="joe", last_name="tester", password="pswd")
 
         self.client.login(username='test', password='pswd')
-        response = self.client.get(self.authorize_url, { 'timestamp': 100 }, follow=False)
+        response = self.client.get(
+            self.authorize_url, {'timestamp': 100}, follow=False)
 
         self.assertEqual(302, response.status_code)
-        expected_location = r'{zendesk_url}/access/remoteauth/?name={name}&email={email}&external_id={external_id}&timestamp={timestamp}&hash={hash}'.format(
+
+        expected_location = r'{zendesk_url}/access/remoteauth/?name={name}&email={email}&external_id={external_id}&timestamp={timestamp}&hash={hash}'.format(  # noqa: E501
             zendesk_url=TEST_ZENDESK_URL,
             name=quote_plus(user.get_full_name()),
             email=quote_plus(user.email),
             external_id=user.get_username(),
             timestamp=u'100',
-            hash='27d0037d68b7d8bd7acf01df7e8f96ab',
-        )
+            hash='27d0037d68b7d8bd7acf01df7e8f96ab', )
         self.assertEqual(expected_location, response['Location'])
 
     @mock.patch('zendesk_auth.views.ZendeskAuthorize.get_zendesk_parameters')
-    def test_create_query_string_returns_url_encoded_string_for_parameters_present(self, get_params):
+    def test_create_query_string_returns_url_encoded_string_for_parameters(
+            self, get_params):
         get_params.return_value = [
             ('name', 'Joe Tester'),
             ('email', 'joe@example.com'),
             ('organization', ''),
         ]
         view = views.ZendeskAuthorize()
-        self.assertEqual('name=Joe+Tester&email=joe%40example.com', view.create_query_string())
+        self.assertEqual('name=Joe+Tester&email=joe%40example.com',
+                         view.create_query_string())
 
     @mock.patch('zendesk_auth.views.ZendeskAuthorize.get_zendesk_parameters')
     def test_create_query_string_never_includes_token(self, get_params):
@@ -81,25 +90,39 @@ class AuthorizeTests(test.TestCase):
             ('token', TEST_ZENDESK_TOKEN),
         ]
         view = views.ZendeskAuthorize()
-        self.assertEqual('name=Joe+Tester&email=joe%40example.com', view.create_query_string())
+        self.assertEqual('name=Joe+Tester&email=joe%40example.com',
+                         view.create_query_string())
 
     def test_generate_hash_creates_pipe_delimited_hash_from_values(self):
         # functional test... testing default behavior.
-        u = User(first_name=" Joe", last_name="Tester ", email="joe@example.com", username="joe4prez")
+        u = User(
+            first_name=" Joe",
+            last_name="Tester ",
+            email="joe@example.com",
+            username="joe4prez")
         request = test.RequestFactory().get("/", {'timestamp': 500})
         request.user = u
 
-        hash_string = "{user_name}|{email}|{external_id}||||{token}|{timestamp}".format(
-            user_name="Joe Tester", email=u.email, external_id=u.get_username(), token=settings.ZENDESK_TOKEN, timestamp=u'500')
+        hash_string = "{user_name}|{email}|{external_id}||||{token}|{timestamp}".format(  # noqa: E501
+            user_name="Joe Tester",
+            email=u.email,
+            external_id=u.get_username(),
+            token=settings.ZENDESK_TOKEN,
+            timestamp=u'500')
         expected_hash = md5(hash_string.encode("utf-8")).hexdigest()
 
         view = views.ZendeskAuthorize(request=request)
         self.assertEqual(expected_hash, view.generate_hash())
 
     @mock.patch('zendesk_auth.views.ZendeskAuthorize.get_zendesk_parameters')
-    def test_generate_hash_creates_pipe_delimited_hash_from_zendesk_params(self, get_params):
+    def test_generate_hash_creates_pipe_delimited_hash_from_zendesk_params(
+            self, get_params):
         # unit test... testing semantics.
-        u = User(first_name="Joe", last_name="Tester", email="joe@example.com", username="joe4prez")
+        u = User(
+            first_name="Joe",
+            last_name="Tester",
+            email="joe@example.com",
+            username="joe4prez")
         get_params.return_value = [
             ('name', '{} {}'.format(u.first_name, u.last_name)),
             ('email', u.email),
@@ -107,7 +130,9 @@ class AuthorizeTests(test.TestCase):
         ]
 
         hash_string = "{user_name}|{email}|{external_id}".format(
-            user_name="Joe Tester", email=u.email, external_id=u.get_username())
+            user_name="Joe Tester",
+            email=u.email,
+            external_id=u.get_username())
         expected_hash = md5(hash_string.encode("utf-8")).hexdigest()
 
         view = views.ZendeskAuthorize()
@@ -121,9 +146,10 @@ class AuthorizeTests(test.TestCase):
     @mock.patch.object(views.ZendeskAuthorize, 'get_remote_photo_url')
     @mock.patch.object(views.ZendeskAuthorize, 'get_token')
     @mock.patch.object(views.ZendeskAuthorize, 'get_timestamp')
-    def test_get_zendesk_parameters_returns_list_of_two_item_pairs(self, get_timestamp, get_token, get_photo,
-            get_tags, get_organization, get_id, get_email, get_user_name):
-        # Unit test assuring the methods get called properly... order is very important.
+    def test_get_zendesk_parameters_returns_list_of_two_item_pairs(
+            self, get_timestamp, get_token, get_photo, get_tags,
+            get_organization, get_id, get_email, get_user_name):
+        # Assuring the methods get called in appropriate order.
 
         view = views.ZendeskAuthorize()
         self.assertEqual([
@@ -137,7 +163,8 @@ class AuthorizeTests(test.TestCase):
             ('timestamp', get_timestamp.return_value),
         ], view.get_zendesk_parameters())
 
-    def test_get_user_name_returns_first_name_when_thats_all_thats_present(self):
+    def test_get_user_name_returns_first_name_when_thats_all_thats_present(
+            self):
         u = User(first_name=" Joe ")
         request = test.RequestFactory().get("/")
         request.user = u
@@ -145,7 +172,8 @@ class AuthorizeTests(test.TestCase):
         view = views.ZendeskAuthorize(request=request)
         self.assertEqual("Joe", view.get_user_name())
 
-    def test_get_user_name_returns_last_name_when_thats_all_thats_present(self):
+    def test_get_user_name_returns_last_name_when_thats_all_thats_present(
+            self):
         u = User(last_name=" Tester ")
         request = test.RequestFactory().get("/")
         request.user = u
@@ -211,7 +239,8 @@ class AuthorizeTests(test.TestCase):
         timestamp = view.get_timestamp()
         self.assertEqual(u'500', timestamp)
 
-    def test_get_timestamp_returns_empty_string_when_not_in_get_parameter(self):
+    def test_get_timestamp_returns_empty_string_when_not_in_get_parameter(
+            self):
         request = test.RequestFactory().get("/", {})
         view = views.ZendeskAuthorize(request=request)
 
@@ -219,7 +248,8 @@ class AuthorizeTests(test.TestCase):
         self.assertEqual(u'', timestamp)
 
 
-@test.utils.override_settings(ZENDESK_URL=TEST_ZENDESK_URL, ZENDESK_TOKEN=TEST_ZENDESK_TOKEN)
+@test.utils.override_settings(
+    ZENDESK_URL=TEST_ZENDESK_URL, ZENDESK_TOKEN=TEST_ZENDESK_TOKEN)
 class ZendeskJWTAuthorizeTests(test.TestCase):
     urls = 'zendesk_auth.urls'
 
@@ -231,7 +261,7 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
 
     @mock.patch('zendesk_auth.views.ZendeskJWTAuthorize.get_jwt_string')
     def test_get_redirect_view_builds_with_jwt_string(self, get_jwt_string):
-        get_jwt_string.return_value="abcd"
+        get_jwt_string.return_value = "abcd"
         view = self.sut()
         expected_url = "{}/access/jwt/?jwt=abcd".format(settings.ZENDESK_URL)
         redirect_url = view.get_redirect_url()
@@ -245,7 +275,9 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_organization')
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_tags')
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_remote_photo_url')
-    def test_get_jwt_string_returns_encoded_string(self, get_photo, get_tags, get_organization, get_id, get_name, get_email, uuid, time):
+    def test_get_jwt_string_returns_encoded_string(
+            self, get_photo, get_tags, get_organization, get_id, get_name,
+            get_email, uuid, time):
         time.time.return_value = 123456
         uuid.uuid1.return_value = "abcd1234"
         get_email.return_value = "test@example.com"
@@ -253,8 +285,7 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
         get_id.return_value = "TST1234"
         get_organization.return_value = "Acme, Inc."
         get_tags.return_value = ["foo", "bar"]
-        get_photo.return_value = "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg"
-
+        get_photo.return_value = "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg"  # noqa: E501
 
         view = self.sut()
         with mock.patch.object(jwt, "encode") as encode:
@@ -281,7 +312,6 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
         time.time.assert_called_once_with()
         uuid.uuid1.assert_called_once_with()
 
-
     @mock.patch('zendesk_auth.views.time')
     @mock.patch('zendesk_auth.views.uuid')
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_email')
@@ -290,7 +320,9 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_organization')
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_tags')
     @mock.patch.object(views.ZendeskJWTAuthorize, 'get_remote_photo_url')
-    def test_only_encodes_parameters_that_have_a_value(self, get_photo, get_tags, get_organization, get_id, get_name, get_email, uuid, time):
+    def test_only_encodes_parameters_that_have_a_value(
+            self, get_photo, get_tags, get_organization, get_id, get_name,
+            get_email, uuid, time):
         time.time.return_value = 123456
         uuid.uuid1.return_value = "abcd1234"
         get_email.return_value = "test@example.com"
@@ -299,7 +331,6 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
         get_organization.return_value = ""
         get_tags.return_value = ["foo", "bar"]
         get_photo.return_value = ""
-
 
         view = self.sut()
         with mock.patch.object(jwt, "encode") as encode:
@@ -312,7 +343,8 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
             "name": get_name.return_value,
             "tags": get_tags.return_value,
         }
-        encode.assert_called_once_with(expected_payload, settings.ZENDESK_TOKEN)
+        encode.assert_called_once_with(expected_payload,
+                                       settings.ZENDESK_TOKEN)
         self.assertEqual(encode.return_value, jwt_string)
         get_email.assert_called_once_with()
         get_name.assert_called_once_with()
