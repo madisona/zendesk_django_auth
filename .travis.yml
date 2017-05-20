@@ -5,6 +5,7 @@ python:
   - "3.5"
   - "3.6"
 install:
+  - pip install -r requirements/dist.txt
   - pip install -r requirements/test.txt
   - pip install -q Django==$DJANGO_VERSION
 script:
