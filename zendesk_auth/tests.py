@@ -46,8 +46,8 @@ class AuthorizeTests(test.TestCase):
     def test_redirects_to_login_when_not_logged_in(self):
         response = self.client.get(self.authorize_url)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(r'{}?next={}'.format(
-            settings.LOGIN_URL, self.authorize_url), response['Location'])
+        self.assertEqual(True, response['Location'].endswith(
+            r'{}?next={}'.format(settings.LOGIN_URL, self.authorize_url)))
 
     def test_redirects_to_zendesk_url(self):
         # functional... testing end to end process
