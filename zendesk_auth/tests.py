@@ -2,9 +2,16 @@
 # -*- coding: utf8 -*-
 
 from hashlib import md5
-from urllib import quote_plus
 
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock  # python27
+
+try:
+    from urllib.parse import quote_plus
+except ImportError:
+    from urllib import quote_plus  # python27
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -16,6 +23,7 @@ from zendesk_auth import views
 
 TEST_ZENDESK_URL = "http://mycompany.zendesk.com"
 TEST_ZENDESK_TOKEN = "my-zendesk-token-for-tests"
+
 
 def create_user(username="test", email="test@example.com", password='pswd', **kwargs):
     u = User(username=username, email=email, **kwargs)
@@ -34,7 +42,7 @@ class AuthorizeTests(test.TestCase):
     def test_redirects_to_login_when_not_logged_in(self):
         response = self.client.get(self.authorize_url)
         self.assertEqual(302, response.status_code)
-        self.assertEqual(r'http://testserver{}?next={}'.format(settings.LOGIN_URL, self.authorize_url), response['Location'])
+        self.assertEqual(r'{}?next={}'.format(settings.LOGIN_URL, self.authorize_url), response['Location'])
 
     def test_redirects_to_zendesk_url(self):
         # functional... testing end to end process
@@ -83,7 +91,7 @@ class AuthorizeTests(test.TestCase):
 
         hash_string = "{user_name}|{email}|{external_id}||||{token}|{timestamp}".format(
             user_name="Joe Tester", email=u.email, external_id=u.get_username(), token=settings.ZENDESK_TOKEN, timestamp=u'500')
-        expected_hash = md5(hash_string).hexdigest()
+        expected_hash = md5(hash_string.encode("utf-8")).hexdigest()
 
         view = views.ZendeskAuthorize(request=request)
         self.assertEqual(expected_hash, view.generate_hash())
@@ -100,7 +108,7 @@ class AuthorizeTests(test.TestCase):
 
         hash_string = "{user_name}|{email}|{external_id}".format(
             user_name="Joe Tester", email=u.email, external_id=u.get_username())
-        expected_hash = md5(hash_string).hexdigest()
+        expected_hash = md5(hash_string.encode("utf-8")).hexdigest()
 
         view = views.ZendeskAuthorize()
         self.assertEqual(expected_hash, view.generate_hash())

@@ -1,7 +1,12 @@
 
 from hashlib import md5
 import time
-from urllib import urlencode
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode  # python 27
+
 import uuid
 
 from django.conf import settings
@@ -11,6 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
 
 import jwt
+
 
 class ZendeskAuthorize(RedirectView):
     """
