@@ -162,4 +162,7 @@ class ZendeskJWTAuthorize(ZendeskAuthorize):
         }
         clean_payload = {k: v for k, v in payload.items() if v}
 
-        return jwt.encode(clean_payload, settings.ZENDESK_TOKEN)
+        try:
+            return jwt.encode(clean_payload, settings.ZENDESK_TOKEN).decode()
+        except AttributeError:
+            return jwt.encode(clean_payload, settings.ZENDESK_TOKEN)
