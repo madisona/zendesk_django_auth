@@ -302,7 +302,7 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
             "remote_photo_url": get_photo.return_value,
         }
         encode.assert_called_once_with(payload, settings.ZENDESK_TOKEN)
-        self.assertEqual(encode.return_value, jwt_string)
+        self.assert_jwt_string(encode, jwt_string)
         get_email.assert_called_once_with()
         get_name.assert_called_once_with()
         get_id.assert_called_once_with()
@@ -345,7 +345,7 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
         }
         encode.assert_called_once_with(expected_payload,
                                        settings.ZENDESK_TOKEN)
-        self.assertEqual(encode.return_value, jwt_string)
+        self.assert_jwt_string(encode, jwt_string)
         get_email.assert_called_once_with()
         get_name.assert_called_once_with()
         get_id.assert_called_once_with()
@@ -354,3 +354,37 @@ class ZendeskJWTAuthorizeTests(test.TestCase):
         get_photo.assert_called_once_with()
         time.time.assert_called_once_with()
         uuid.uuid1.assert_called_once_with()
+
+    @mock.patch('zendesk_auth.views.time')
+    @mock.patch('zendesk_auth.views.uuid')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_email')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_user_name')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_external_id')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_organization')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_tags')
+    @mock.patch.object(views.ZendeskJWTAuthorize, 'get_remote_photo_url')
+    def test_jwt_string_is_returned_as_str_not_bytes(
+            self, get_photo, get_tags, get_organization, get_id, get_name,
+            get_email, uuid, time):
+        time.time.return_value = 123456
+        uuid.uuid1.return_value = "abcd1234"
+        get_email.return_value = "test@example.com"
+        get_name.return_value = "Tester McGee"
+        get_id.return_value = ""
+        get_organization.return_value = ""
+        get_tags.return_value = ["foo", "bar"]
+        get_photo.return_value = ""
+
+        view = self.sut()
+        jwt_string = view.get_jwt_string()
+        try:
+            self.assertTrue(isinstance(jwt_string, unicode))
+        except NameError:
+            self.assertTrue(isinstance(jwt_string, str))
+
+    def assert_jwt_string(self, encode, jwt_string):
+        try:
+            expected = encode.return_value.decode()
+        except AttributeError:
+            expected = encode.return_value
+        self.assertEqual(expected, jwt_string)
