@@ -12,7 +12,7 @@ setup(
     url="https://github.com/madisona/zendesk_django_auth",
     packages=find_packages(exclude=["example*"]),
     include_package_data=True,
-    install_requires=open('requirements/dist.txt').read().split('\n'),
+    install_requires=open('requirements/requirements.txt').read().split('\n'),
     tests_require=open('requirements/test.txt').read().split('\n'),
     zip_safe=False,
     classifiers=[
