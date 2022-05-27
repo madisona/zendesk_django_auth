@@ -14,7 +14,7 @@ except ImportError:
     from urllib import quote_plus  # python27
 
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django import test
 from django.conf import settings
 import jwt
