@@ -1,10 +1,11 @@
 from django.conf.urls import include, url
 
 from django.contrib import admin
+from zendesk_auth import urls
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'', include('zendesk_auth.urls')),
+    url(r'', include(urls.urlpatterns)),
 
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
 ]
