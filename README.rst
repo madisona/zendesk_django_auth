@@ -1,7 +1,5 @@
 Zendesk Django Auth
 ===================
-.. image:: https://travis-ci.org/madisona/zendesk_django_auth.svg?branch=master
-:target: https://travis-ci.org/madisona/zendesk_django_auth
 
 Allows your Django App to be used as an authentication platform for your Zendesk Account
 

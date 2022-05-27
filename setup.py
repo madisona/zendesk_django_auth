@@ -1,14 +1,17 @@
 
+import os
 from setuptools import setup, find_packages
 
 from zendesk_auth import VERSION
 
+README = os.path.join(os.path.dirname(__file__), 'README.rst')
+LONG_DESCRIPTION = open(README, 'r').read()
 setup(
     name="zendesk_django_auth",
     version=VERSION,
     author="Aaron Madison",
     description="Use your django app as an auth platform for Zendesk.",
-    long_description=open('README.rst', 'r').read(),
+    long_description=LONG_DESCRIPTION,
     url="https://github.com/madisona/zendesk_django_auth",
     packages=find_packages(exclude=["example*"]),
     include_package_data=True,
