@@ -1,11 +1,5 @@
 
 import time
-
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode  # python 27
-
 import uuid
 
 from django.conf import settings
@@ -107,4 +101,3 @@ class ZendeskJWTAuthorize(TemplateView):
 
     def get_timestamp(self):
         return self.request.GET.get('timestamp', '')
-

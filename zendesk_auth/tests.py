@@ -1,17 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
-from hashlib import md5
 
 try:
     from unittest import mock
 except ImportError:
     import mock  # python27
-
-try:
-    from urllib.parse import quote_plus
-except ImportError:
-    from urllib import quote_plus  # python27
 
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -158,7 +152,8 @@ class AuthorizeJWTTests(test.TestCase):
 
         self.client.login(username='test', password='pswd')
         response = self.client.get("/zendesk-jwt-authorize/")
-        self.assertContains(response, '<form id="jwtForm" method="post" action="{}/access/jwt">'.format(settings.ZENDESK_URL), count=1)
+        expected_string = '<form id="jwtForm" method="post" action="{}/access/jwt">'.format(settings.ZENDESK_URL)
+        self.assertContains(response, expected_string, count=1)
 
     @mock.patch('zendesk_auth.views.time')
     @mock.patch('zendesk_auth.views.uuid')
