@@ -1,0 +1,12 @@
+<html>
+    <script>
+        window.onload = function() {
+            document.forms['jwtForm'].submit();
+        };
+    </script>
+    <div>
+        <form id="jwtForm" method="post" action="{{ zendesk_url }}/access/jwt">
+            <input id="jwtInput" type="hidden" name="jwt" value="{{ jwt_string }}" />
+        </form>
+    </div>
+</html>

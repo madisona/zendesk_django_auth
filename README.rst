@@ -13,7 +13,7 @@ Installation
 ------------
 zendesk_auth version 0.0.3+ works with django 1.5 and above
 
-    `pip install zendesk_django_auth`
+    `pip install zendesk-django-auth`
 
 
 Usage
