@@ -1,3 +1,6 @@
+## [0.3.1] - 2024-2-7
+- Bug Fix: Fix MANIFEST so template is included with distribution
+- 
 ## [0.3.0] - 2023-12-15
 - Enhancement: POST JWT back to Zendesk instead of GET 
 - Removed deprecated "ZendeskAuthorize" view
